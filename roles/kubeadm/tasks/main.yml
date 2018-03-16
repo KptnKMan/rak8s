@@ -22,6 +22,45 @@
   shell: wget -qO- https://get.docker.com/ | sed 's/docker-ce/docker-ce={{ version_docker }}' | sh
   when: docker_there.stat.exists == False
 
+# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
+# - name: Install Docker requirements
+#   apt:
+#     name: "{{ item }}"
+#     state: latest
+#   with_items:
+#     - apt-transport-https
+#     - ca-certificates
+#     - curl
+#     - gnupg2
+#     - software-properties-common
+#   when: docker_there.stat.exists == False
+
+# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
+# - name: Add Docker official GPG Key
+#   shell: curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+
+# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
+# - name: Add Docker to Stable Repo
+#   shell: echo "deb [arch=armhf] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+#   when: docker_there.stat.exists == False
+
+# - name: apt-get update
+#   apt:
+#     update_cache=yes
+#     autoclean=yes
+#     autoremove=yes
+#     cache_valid_time=86400
+#   when: docker_there.stat.exists == False
+
+# https://docs.docker.com/install/linux/docker-ce/debian/#install-docker-ce-1
+# - name: Install Docker from apt
+#   apt:
+#     name: "{{ item }}"
+#     state: {{ version_docker }}
+#   with_items:
+#     - docker-ce
+#   when: docker_there.stat.exists == False
+
 # https://kubernetes.io/docs/setup/independent/install-kubeadm/
 - name: Install apt-transport-https
   apt:
