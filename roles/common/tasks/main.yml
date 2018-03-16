@@ -17,6 +17,23 @@
     value: 1
     state: present
 
+- name: Determine if docker is installed
+  stat:
+    path: /usr/bin/docker
+  register: docker_there
+  ignore_errors: True
+
+- name: apt-get remove any old versions of docker
+  apt:
+    name: {{ item }}
+    with_items:
+      - docker
+      - docker-engine
+      - docker.io
+      - docker-ce
+    state: absent
+  when: docker_there.stat.exists == True
+
 - name: apt-get update
   apt:
     update_cache=yes
