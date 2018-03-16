@@ -26,11 +26,11 @@
 - name: apt-get remove any old versions of docker
   apt:
     name: {{ item }}
-    with_items:
-      - docker
-      - docker-engine
-      - docker.io
-      - docker-ce
+  with_items:
+    - docker
+    - docker-engine
+    - docker.io
+    - docker-ce
     state: absent
   when: docker_there.stat.exists == True
 
