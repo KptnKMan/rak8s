@@ -4,7 +4,7 @@
 # https://gist.github.com/alexellis/fdbc90de7691a1b9edb545c17da2d975
 - name: Disable Swap
   shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
-  
+
 - name: Determine if Kubernetes is installed
   stat:
     path: /usr/bin/kubeadm
