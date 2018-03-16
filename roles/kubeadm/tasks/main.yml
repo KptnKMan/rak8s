@@ -4,6 +4,27 @@
 # https://gist.github.com/alexellis/fdbc90de7691a1b9edb545c17da2d975
 - name: Disable Swap
   shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
+  
+- name: Determine if Kubernetes is installed
+  stat:
+    path: /usr/bin/kubeadm
+  register: kube_there
+  ignore_errors: True
+
+- name: Reset Kubernetes if installed
+  shell: kubeadm reset
+  register: kubeadm_reset
+  when: kube_there.stat.exists == True
+
+- name: Remove any old versions of Kubernetes
+  apt:
+    name: {{ item }}
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+    state: absent
+  when: docker_there.stat.exists == True
 
 # Docker Convenience Script Can Only Be Run Once
 - name: Determine if docker is installed
@@ -11,6 +32,17 @@
     path: /usr/bin/docker
   register: docker_there
   ignore_errors: True
+
+- name: Remove any old versions of docker
+  apt:
+    name: {{ item }}
+  with_items:
+    - docker
+    - docker-engine
+    - docker.io
+    - docker-ce
+    state: absent
+  when: docker_there.stat.exists == True
 
 # https://docs.docker.com/engine/installation/linux/docker-ce/debian/#install-using-the-convenience-script
 # - name: Run Docker Install Script
