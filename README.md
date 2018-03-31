@@ -27,9 +27,11 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 * Raspberry Pis should have static IPs
     * Requirement for Kubernetes and Ansible inventory
     * You can set these via OS configuration or DHCP reservations (your choice)
+        * Basically just create an empty file named *ssh* on the root of your Pis */boot* partition. This should be all that is required.
 
 * Ability to SSH into all Raspberry Pis and escalate privileges with sudo
     * The pi user is fine just change its password
+    * Enable ssh on your headless Raspberry Pis using [step-3 instructions here](https://www.raspberrypi.org/documentation/remote-access/ssh/)
 
 * [Ansible](http://docs.ansible.com/ansible/latest/intro_installation.html) 2.2 or higher
 
