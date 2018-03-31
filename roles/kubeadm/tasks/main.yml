@@ -18,12 +18,13 @@
 
 - name: Remove any old versions of Kubernetes
   apt:
-    name: {{ item }}
+    name: "{{ item }}"
+    state: absent
+    purge: yes
   with_items:
     - kubelet
     - kubeadm
     - kubectl
-    state: absent
   when: kube_there.stat.exists == True
 
 # Docker Convenience Script Can Only Be Run Once
@@ -35,80 +36,64 @@
 
 - name: Remove any old versions of docker
   apt:
-    name: {{ item }}
+    name: "{{ item }}"
+    state: absent
+    purge: yes
   with_items:
     - docker
     - docker-engine
     - docker.io
     - docker-ce
-    state: absent
   when: docker_there.stat.exists == True
 
-# https://docs.docker.com/engine/installation/linux/docker-ce/debian/#install-using-the-convenience-script
-# - name: Run Docker Install Script
-#   script: files/get-docker.sh
-#   when: docker_there.stat.exists == False
-
-# https://docs.docker.com/engine/installation/linux/docker-ce/debian/#install-using-the-convenience-script
-- name: Run Docker Install Script online
-  shell: wget -qO- https://get.docker.com/ | sed 's/docker-ce/docker-ce={{ version_docker }}' | sh
-  when: docker_there.stat.exists == False
-
 # https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
-# - name: Install Docker requirements
-#   apt:
-#     name: "{{ item }}"
-#     state: latest
-#   with_items:
-#     - apt-transport-https
-#     - ca-certificates
-#     - curl
-#     - gnupg2
-#     - software-properties-common
-#   when: docker_there.stat.exists == False
+# https://kubernetes.io/docs/setup/independent/install-kubeadm/
+- name: Install Docker requirements
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg2
+    - software-properties-common
 
-# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
-# - name: Add Docker official GPG Key
-#   shell: curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+- name: Import Docker CE repository gpg key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+    update_cache: yes
+    # filename: 'docker'
 
-# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
-# - name: Add Docker to Stable Repo
-#   shell: echo "deb [arch=armhf] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
-#   when: docker_there.stat.exists == False
+- name: Add Docker CE repository
+  apt_repository:
+    repo: "deb [arch=armhf] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
 
-# - name: apt-get update
-#   apt:
-#     update_cache=yes
-#     autoclean=yes
-#     autoremove=yes
-#     cache_valid_time=86400
-#   when: docker_there.stat.exists == False
+- name: apt-get update
+  apt:
+    update_cache: yes
+    autoclean: yes
+    autoremove: yes
 
 # https://docs.docker.com/install/linux/docker-ce/debian/#install-docker-ce-1
-# - name: Install Docker from apt
-#   apt:
-#     name: "{{ item }}"
-#     state: {{ version_docker }}
-#   with_items:
-#     - docker-ce
-#   when: docker_there.stat.exists == False
-
-# https://kubernetes.io/docs/setup/independent/install-kubeadm/
-- name: Install apt-transport-https
+- name: Install Docker
   apt:
-    name: apt-transport-https
-    state: latest
+    update_cache: yes
+    name: docker-ce={{ version_docker }}
+    state: installed
 
 - name: Add Google Cloud Repo Key
-  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
 
-- name: Add Kubernetes to Available apt Sources
-  template:
-    src: kubernetes.list
-    dest: /etc/apt/sources.list.d/kubernetes.list
-    owner: root
-    group: root
-    mode: 0644
+- name: Add Kubernetes APT repository
+  apt_repository:
+    repo: "deb http://apt.kubernetes.io/ kubernetes-{{ ansible_distribution_release }} main"
+    state: present
+    filename: 'kubernetes'
 
 - name: apt-get update
   apt:
@@ -118,9 +103,10 @@
 
 - name: Install k8s Y'all
   apt:
+    update_cache: yes
     name: "{{ item }}"
-    state: {{ version_kubernetes }}
+    state: installed
   with_items:
-    - kubelet
-    - kubeadm
-    - kubectl
+    - kubelet={{ version_kubernetes }}
+    - kubeadm={{ version_kubernetes }}
+    - kubectl={{ version_kubernetes }}
