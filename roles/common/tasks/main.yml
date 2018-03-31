@@ -10,12 +10,14 @@
   register: cmdline
   tags:
     - boot
+  retries: 5
 
 - name: Pass bridged IPv4 traffic to iptables' chains
   sysctl:
     name: net.bridge.bridge-nf-call-iptables
     value: 1
     state: present
+  retries: 5
 
 - name: apt-get update
   apt:
@@ -27,6 +29,7 @@
 - name: apt-get upgrade
   apt:
     upgrade=full
+  retries: 5
 
 - name: Reboot
   shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/cmdline.txt Change"
