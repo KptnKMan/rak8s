@@ -1,4 +1,4 @@
 token: udy29x.ugyyk3tumg27atmr
 podnet: 10.244.0.0/16
-version_docker: "17.12.1~ce-0~debian" # "17.12.1~ce-0~debian"
-version_kubernetes: "1.9.4-00" # "1.8.9-00"
+version_docker: "18.03.0" # "17.12.1"
+version_kubernetes: "1.9.4" # "1.10.0" "1.9.4" "1.8.9"
