@@ -2,6 +2,18 @@
 # tasks file for common
 - name: Enabling cgroup options at boot
   copy:
+    src: cmdline.txt
+    dest: /boot/cmdline.txt
+    owner: root
+    group: root
+    mode: 0755
+  register: config
+  tags:
+    - boot
+  retries: 5
+
+- name: Setting config options at boot
+  copy:
     src: config.txt
     dest: /boot/config.txt
     owner: root
