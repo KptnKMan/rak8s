@@ -1,8 +1,13 @@
-# KMan Custom Kube config
+# KptnKMan Custom Kube config
+
+# Reduce resources, more for Docker
 gpu_mem=16
 dtparam=audio=off
-cgroup_enable=cpuset
-cgroup_enable=memory
+
+#cgroup_enable=cpuset
+
+# https://github.com/raspberrypi/linux/commit/ba742b52e5099b3ed964e78f227dc96460b5cdc0
+#cgroup_enable=memory
 #cgroup_memory=1
 
 # For more options and information see
