@@ -42,14 +42,16 @@
 
 - name: apt-get update
   apt:
-    update_cache=yes
-    autoclean=yes
-    autoremove=yes
-    cache_valid_time=86400
+    update_cache: yes
+    autoclean: yes
+    autoremove: yes
+    cache_valid_time: 86400
+    purge: yes
 
 - name: apt-get upgrade
   apt:
-    upgrade=full
+    upgrade: full
+    force: yes
   retries: 5
 
 - name: Reboot
@@ -74,3 +76,4 @@
   tags:
     - boot
     - shutdown
+  retries: 5
