@@ -1,3 +1,5 @@
+# playbook to upgrade cluster to latest available version
+
 - hosts: master
   tasks:
     - name: apt-get update

@@ -1,0 +1,45 @@
+# playbook to remove kube from all hosts
+# useful for reset config
+
+- hosts: all
+  tasks:
+    - name: Determine if Kubernetes is installed
+      stat:
+        path: /usr/bin/kubeadm
+      register: kube_there
+      ignore_errors: True
+
+    - name: Reset Kubernetes if installed
+      shell: kubeadm reset
+      register: kubeadm_reset
+      when: kube_there.stat.exists == True
+
+    - name: Remove any old versions of Kubernetes
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+      when: kube_there.stat.exists == True
+
+    # Docker Convenience Script Can Only Be Run Once
+    - name: Determine if docker is installed
+      stat:
+        path: /usr/bin/docker
+      register: docker_there
+      ignore_errors: True
+
+    - name: Remove any old versions of docker
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      with_items:
+        - docker
+        - docker-engine
+        - docker.io
+        - docker-ce
+      when: docker_there.stat.exists == True
