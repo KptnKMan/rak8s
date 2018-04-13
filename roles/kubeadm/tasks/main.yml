@@ -53,7 +53,7 @@
     url: https://download.docker.com/linux/debian/gpg
     id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
     state: present
-    update_cache: yes
+    # update_cache: yes
     # filename: 'docker'
 
 - name: Add Docker CE repository
@@ -63,7 +63,7 @@
 
 - name: apt-get update
   apt:
-    update_cache: yes
+    # update_cache: yes
     autoclean: yes
     autoremove: yes
 
@@ -102,13 +102,13 @@
 
 - name: apt-get update
   apt:
-    update_cache: yes
+    # update_cache: yes
     autoclean: yes
     autoremove: yes
 
 - name: Install k8s Y'all
   apt:
-    update_cache: yes
+    # update_cache: yes
     name: "{{ item }}"
     state: installed
     force: yes
