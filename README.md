@@ -27,6 +27,7 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 * Raspberry Pis should have static IPs
     * Requirement for Kubernetes and Ansible inventory
     * You can set these via OS configuration or DHCP reservations (your choice)
+    * Ensure that each Raspberry Pi has a *unique* hostname in file `/etc/hostname`
 
 * Ability to SSH into all Raspberry Pis and escalate privileges with sudo
     * The pi user is fine just change its password
