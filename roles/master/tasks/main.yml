@@ -5,7 +5,7 @@
   register: kubeadm_reset
 
 - name: Initialize Master
-  shell: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --token={{ token }}
+  shell: kubeadm init --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --token={{ token }}
   register: kubeadm_init
   when: kubeadm_reset|succeeded
 
@@ -28,7 +28,7 @@
   when: kubeadm_init
 
 - name: Join Kubernetes Cluster
-  shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ groups['master'][0] }}:6443 --discovery-token-unsafe-skip-ca-verification
+  shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443 --discovery-token-unsafe-skip-ca-verification
   when: kubeadm_reset|succeeded
   register: kubeadm_join
 
