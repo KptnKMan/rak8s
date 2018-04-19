@@ -9,7 +9,7 @@
   register: kubeadm_init
   when: kubeadm_reset|succeeded
 
-- name: Create Kubernetes config directory
+- name: Create kubeconfig directory
   file:
     path: /root/.kube/
     state: directory
@@ -17,7 +17,7 @@
     group: root
     mode: 0755
 
-- name: Copy admin.conf to config directory
+- name: Copy kubeconfig to /root/.kube/ directory
   copy:
     src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
