@@ -27,6 +27,13 @@
     remote_src: yes
   when: kubeadm_init
 
+- name: Fetch kubeconfig file to local .kube/ directory
+  fetch:
+    # src: /root/.kube/config
+    src: /etc/kubernetes/admin.conf
+    dest: ~/.kube/config
+    flat: yes
+
 - name: Join Kubernetes Cluster
   shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443 --discovery-token-unsafe-skip-ca-verification
   when: kubeadm_reset|succeeded
