@@ -90,3 +90,11 @@
     - kubeadm={{ version_kubernetes }}-00
     - kubectl={{ version_kubernetes }}-00
   when: kube_there.stat.exists == False
+
+- name: insert KUBELET_EXTRA_ARGS line after KUBELET_CERTIFICATE_ARGS line
+  blockinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    insertafter: 'Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki"'
+    content: |
+      Environment="KUBELET_EXTRA_ARGS=--node-ip={{ ansible_eth0.ipv4.address }}"
