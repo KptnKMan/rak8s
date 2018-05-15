@@ -24,22 +24,6 @@
     - boot
   retries: 5
 
-# # Run once because it fails always first time
-# - name: Pass bridged IPv4 traffic to iptables' chains [test]
-#   sysctl:
-#     name: net.bridge.bridge-nf-call-iptables
-#     value: 1
-#     state: present
-#   ignore_errors: yes
-
-# # Run for reals
-# - name: Pass bridged IPv4 traffic to iptables' chains [for reals]
-#   sysctl:
-#     name: net.bridge.bridge-nf-call-iptables
-#     value: 1
-#     state: present
-#   retries: 5
-
 - name: apt-get update
   apt:
     # update_cache: yes
