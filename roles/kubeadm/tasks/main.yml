@@ -32,22 +32,6 @@
     repo: "deb [arch=armhf] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
     state: present
 
-# # Run once because it fails always first time
-- name: Pass bridged IPv4 traffic to iptables' chains [test]
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-    state: present
-  ignore_errors: yes
-
-# Run for reals
-- name: Pass bridged IPv4 traffic to iptables' chains [for reals]
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-    state: present
-  retries: 5
-
 - name: apt-get update
   apt:
     # update_cache: yes
@@ -75,6 +59,22 @@
     force: yes
   with_items: docker-ce={{ version_docker }}~ce-0~debian
   when: docker_there.stat.exists == False
+
+# # Run once because it fails always first time
+- name: Pass bridged IPv4 traffic to iptables' chains [test]
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+  ignore_errors: yes
+
+# Run for reals
+- name: Pass bridged IPv4 traffic to iptables' chains [for reals]
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+  retries: 5
 
 - name: Add Google Cloud Repo Key
   apt_key:
