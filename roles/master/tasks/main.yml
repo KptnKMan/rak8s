@@ -5,7 +5,7 @@
   register: kubeadm_reset
 
 - name: Initialize Master
-  shell: kubeadm init --token={{ token }} --pod-network-cidr={{ podnet }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}
   register: kubeadm_init
   when: kubeadm_reset|succeeded
 
