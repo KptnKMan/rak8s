@@ -1,6 +1,6 @@
-raspberrypi1.local    ansible_host=192.168.178.131
-raspberrypi2.local    ansible_host=192.168.178.132
-raspberrypi3.local    ansible_host=192.168.178.133
+raspberrypi1    ansible_host=192.168.178.131
+raspberrypi2    ansible_host=192.168.178.132
+raspberrypi3    ansible_host=192.168.178.133
 
 [master]
-raspberrypi1.local
+raspberrypi1
