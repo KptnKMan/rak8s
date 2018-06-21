@@ -5,7 +5,7 @@
   register: kubeadm_reset
 
 - name: Initialize Master
-  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kubernetes }} --pod-network-cidr={{ podnet }}
   register: kubeadm_init
   when: kubeadm_reset|succeeded
 
@@ -41,6 +41,15 @@
 
 - name: Install Weave (Networking)
   shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" 
+  when: cni_net == "weave"
+
+- name: Install Weave Custom (Networking)
+  shell: curl -sSL "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" | sed "s/weave-kube/weave-kube-arm/g" | kubectl apply -f -
+  when: cni_net == "weave_kube_arm"
+
+- name: Install Flannel (Networking)
+  shell: curl -sSL "https://rawgit.com/coreos/flannel/v{{ version_flannel }}/Documentation/kube-flannel.yml" | sed "s/amd64/arm/g" | kubectl create -f -
+  when: cni_net == "flannel"
 
 - name: Poke kubelet
   systemd:
@@ -49,3 +58,7 @@
     daemon_reload: yes
     enabled: yes
   register: kubelet_poke
+
+- name: wait 30 seconds for Networking to settle
+  wait_for:
+    delay: 30
