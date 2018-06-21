@@ -32,6 +32,11 @@
       register: docker_there
       ignore_errors: True
 
+    - name: "Remove docker images" 
+      shell: echo $(docker rmi --force $(docker images --all -q) && echo 'true')
+      become: true
+      when: docker_there.stat.exists == True
+
     - name: Remove any old versions of docker
       apt:
         name: "{{ item }}"
@@ -43,3 +48,12 @@
         - docker.io
         - docker-ce
       when: docker_there.stat.exists == True
+
+    - name: "Remove pod logging"
+      shell: rm -rf /var/log/pods/* 
+      become: True
+
+    - name: remove any leftover dependencies
+      apt:
+        autoclean: yes
+        autoremove: yes
