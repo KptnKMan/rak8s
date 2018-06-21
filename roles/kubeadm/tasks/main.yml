@@ -57,7 +57,7 @@
     name: "{{ item }}"
     state: installed
     force: yes
-  with_items: docker-ce={{ version_docker }}~ce-0~debian
+  with_items: docker-ce={{ version_docker }}
   when: docker_there.stat.exists == False
 
 # # Run once because it fails always first time
