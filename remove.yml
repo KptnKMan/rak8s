@@ -23,6 +23,7 @@
         - kubelet
         - kubeadm
         - kubectl
+        - kubernetes-cni
       when: kube_there.stat.exists == True
 
     # Docker Convenience Script Can Only Be Run Once
