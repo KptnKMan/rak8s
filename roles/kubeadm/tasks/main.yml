@@ -55,7 +55,7 @@
   apt:
     # update_cache: yes
     name: "{{ item }}"
-    state: installed
+    state: present
     force: yes
   with_items: docker-ce={{ version_docker }}
   when: docker_there.stat.exists == False
@@ -99,7 +99,7 @@
   apt:
     # update_cache: yes
     name: "{{ item }}"
-    state: installed
+    state: present
     force: yes
   with_items:
     - kubelet={{ version_kubernetes }}-00

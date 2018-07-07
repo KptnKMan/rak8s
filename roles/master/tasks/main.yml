@@ -53,7 +53,7 @@
 
 - name: Poke kubelet
   systemd:
-    name: kubelet
+    name: kubelet.service
     state: restarted
     daemon_reload: yes
     enabled: yes
