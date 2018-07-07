@@ -64,7 +64,7 @@ Make sure SSH is enabled on each Pi.
 ## Download the latest release or clone the repo:
 
 ```
-git clone https://github.com/kptnkman/rak8s.git
+git clone -b kareem git@github.com:KptnKMan/rak8s.git
 ```
 
 ## Modify ansible.cfg and inventory
