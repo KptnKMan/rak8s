@@ -1,8 +1,19 @@
-# playbook to change hostnames to values in inventory file
+# playbook to:
+# - add pub keys to authorized file
+# - change hostnames to values in inventory file
+# - reboot
+# you should run this as:
+# ansible-playbook cluster_prep --ask-pass
 
 - hosts: all
   sudo: yes
   tasks:
+
+    - name: main | placing authorized key from file to remote hosts
+      authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
     - name: main | changing hostname to match inventory_hostname
       hostname:
