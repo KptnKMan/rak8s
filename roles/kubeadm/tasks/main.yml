@@ -95,7 +95,7 @@
     autoclean: yes
     autoremove: yes
 
-- name: Install k8s Y'all
+- name: Install k8s {{ kubernetes_package_version }} Y'all
   apt:
     # update_cache: yes
     name: "{{ item }}"
