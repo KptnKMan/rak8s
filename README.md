@@ -84,7 +84,7 @@ ansible -m ping all
 
 I prepared a cluster setup script for you.
 * The script will not work if you have not enabled SSH!
-* You will be prompted for the current/default raspberry Pi 'pi' password. If you have not changed it, it will be the [default password.](https://www.raspberrypi.org/documentation/linux/usage/users.md)
+* You will be prompted for the current/default password. If you have not changed it, it will be the [default password.](https://www.raspberrypi.org/documentation/linux/usage/users.md)
 ```
 ansible-playbook cluster_prep.yml --ask-pass
 ```
