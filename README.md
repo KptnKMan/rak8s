@@ -20,6 +20,16 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 * Class 10 SD Cards
 * Network connection (wireless or wired) with access to the internet
 
+## Versions Tested
+
+In the [all.yml](group_vars/all.yml) file, these are the verified tested versions of a running from scratch cluster. Kubernetes can run a different version from the cluster version, but in testing these versions are matched. I've worked to make sure that 3 versions are supported,
+meaning `1.11/10/9.x`, so anything kube `1.8.x` and older definitely won't work.
+Flannel is usually always `0.10.0`, docker is always `18.03.1`. Your mileage may vary, but these worked in testing. Weave is preferred CNI since they [fixed the bug](https://github.com/raspberrypi/linux/issues/2580) in RPi firmware. :)
+* version_kubernetes: `1.11.0`, `1.10.5`, `1.9.9`
+* version_kube_cluster: `1.11.0`, `1.10.5`, `1.9.9`
+* version_flannel: `0.10.0`
+* version_docker: `18.03.1~ce-0~debian`
+
 ## Software
 
 * [Raspbian Lite](https://www.raspberrypi.org/downloads/raspbian/) (installed on each Raspberry Pi)
@@ -27,6 +37,7 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 * Raspberry Pis should have static IPs
     * Requirement for Kubernetes and Ansible inventory
     * You can set these via OS configuration or DHCP reservations (your choice)
+    * Ensure that each Raspberry Pi has a *unique* hostname in file `/etc/hostname` (run the hostnames.yml playbook)
 
 * Ability to SSH into all Raspberry Pis and escalate privileges with sudo
     * The pi user is fine just change its password
@@ -44,10 +55,16 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 
 # Stand Up Your Kubernetes Cluster
 
+## Make sure SSH is setup:
+
+Make sure SSH is enabled on each Pi.
+* Enable ssh on your headless Raspberry Pis using [step-3 instructions here](https://www.raspberrypi.org/documentation/remote-access/ssh/)
+    * Basically just create an empty file named *ssh* on the root of your Pis */boot* partition. This should be all that is required.
+
 ## Download the latest release or clone the repo:
 
 ```
-git clone https://github.com/rak8s/rak8s.git
+git clone -b kareem git@github.com:KptnKMan/rak8s.git
 ```
 
 ## Modify ansible.cfg and inventory
@@ -58,8 +75,18 @@ If your SSH user on the Raspberry Pis are not the Raspbian default `pi` user mod
 
 ## Confirm Ansible is working with your Raspberry Pis:
 
+This doesn't always work, so if you get an error here, you can still continue if you can ssh to the Pis.
 ```
 ansible -m ping all
+```
+
+## Prep cluster nodes:
+
+I prepared a cluster setup script for you.
+* The script will not work if you have not enabled SSH!
+* You will be prompted for the current/default password. If you have not changed it, it will be the [default password.](https://www.raspberrypi.org/documentation/linux/usage/users.md)
+```
+ansible-playbook cluster_prep.yml --ask-pass
 ```
 
 ## Deploy, Deploy, Deploy
@@ -82,12 +109,12 @@ The output should look something like this:
 
 ```
 NAME       STATUS    ROLES     AGE       VERSION
-pik8s000   Ready     master    2d        v1.9.1
-pik8s001   Ready     <none>    2d        v1.9.1
-pik8s002   Ready     <none>    2d        v1.9.1
-pik8s003   Ready     <none>    2d        v1.9.1
-pik8s005   Ready     <none>    2d        v1.9.1
-pik8s004   Ready     <none>    2d        v1.9.1
+pik8s000   Ready     master    2d        v1.10.5
+pik8s001   Ready     <none>    2d        v1.10.5
+pik8s002   Ready     <none>    2d        v1.10.5
+pik8s003   Ready     <none>    2d        v1.10.5
+pik8s005   Ready     <none>    2d        v1.10.5
+pik8s004   Ready     <none>    2d        v1.10.5
 ```
 
 ## Dashboard
@@ -100,6 +127,10 @@ kubectl proxy
 
 Then open a web browser and navigate to:
 [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
+
+# Where to Get Help
+
+If you run into any problems please join our welcoming [Discourse](https://discourse.rak8s.io/) community. If you find a bug please open an issue and pull requests are always welcome.
 
 # Etymology
 

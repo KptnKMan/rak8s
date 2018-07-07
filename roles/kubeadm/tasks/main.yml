@@ -5,6 +5,12 @@
 - name: Disable Swap
   shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
 
+- name: Determine if Kubernetes is installed
+  stat:
+    path: /usr/bin/kubeadm
+  register: kube_there
+  ignore_errors: True
+
 # Docker Convenience Script Can Only Be Run Once
 - name: Determine if docker is installed
   stat:
@@ -12,39 +18,107 @@
   register: docker_there
   ignore_errors: True
 
-# https://docs.docker.com/engine/installation/linux/docker-ce/debian/#install-using-the-convenience-script
-- name: Run Docker Install Script
-  script: files/get-docker.sh
-  when: docker_there.stat.exists == False
-
+# https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
 # https://kubernetes.io/docs/setup/independent/install-kubeadm/
-- name: Install apt-transport-https
-  apt:
-    name: apt-transport-https
-    state: latest
+- name: Import Docker CE repository gpg key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    state: present
+    # update_cache: yes
 
-- name: Add Google Cloud Repo Key
-  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-
-- name: Add Kubernetes to Available apt Sources
-  template:
-    src: kubernetes.list
-    dest: /etc/apt/sources.list.d/kubernetes.list
-    owner: root
-    group: root
-    mode: 0644
+- name: Add Docker CE repository
+  apt_repository:
+    repo: "deb [arch=armhf] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
 
 - name: apt-get update
   apt:
-    update_cache: yes
+    # update_cache: yes
+    autoclean: yes
+    autoremove: yes
+
+- name: Install Docker requirements
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+    - gnupg2
+  when: docker_there.stat.exists == False
+
+# https://docs.docker.com/install/linux/docker-ce/debian/#install-docker-ce-1
+- name: Install Docker
+  apt:
+    # update_cache: yes
+    name: "{{ item }}"
+    state: present
+    force: yes
+  with_items: docker-ce={{ version_docker }}
+  when: docker_there.stat.exists == False
+
+# # Run once because it fails always first time
+- name: Pass bridged IPv4 traffic to iptables' chains [test]
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+  ignore_errors: yes
+
+# Run for reals
+- name: Pass bridged IPv4 traffic to iptables' chains [for reals]
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+  retries: 5
+
+- name: Add Google Cloud Repo Key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+# Use xenial because google doesn't update their repos
+- name: Add Kubernetes APT repository
+  apt_repository:
+    # repo: "deb http://apt.kubernetes.io/ kubernetes-{{ ansible_distribution_release }} main"
+    repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+    state: present
+    filename: 'kubernetes'
+
+- name: apt-get update
+  apt:
+    # update_cache: yes
     autoclean: yes
     autoremove: yes
 
 - name: Install k8s Y'all
   apt:
+    # update_cache: yes
     name: "{{ item }}"
-    state: latest
+    state: present
+    force: yes
   with_items:
-    - kubelet
-    - kubeadm
-    - kubectl
+    - kubelet={{ version_kubernetes }}-00
+    - kubeadm={{ version_kubernetes }}-00
+    - kubectl={{ version_kubernetes }}-00
+  when: kube_there.stat.exists == False
+
+- name: insert KUBELET_EXTRA_ARGS line after KUBELET_CERTIFICATE_ARGS line
+  blockinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    insertafter: 'Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki"'
+    content: |
+      Environment="KUBELET_EXTRA_ARGS=--node-ip={{ ansible_eth0.ipv4.address }}"
+
+- name: Poke kubelet 1
+  systemd:
+    name: kubelet.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  register: kubelet_poke

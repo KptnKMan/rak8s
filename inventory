@@ -1,9 +1,6 @@
-pik8s000    ansible_host=192.168.86.200
-pik8s001    ansible_host=192.168.86.201
-pik8s002    ansible_host=192.168.86.202
-pik8s003    ansible_host=192.168.86.203
-pik8s004    ansible_host=192.168.86.204
-pik8s005    ansible_host=192.168.86.205
+raspberrypi1    ansible_host=192.168.178.131
+raspberrypi2    ansible_host=192.168.178.132
+raspberrypi3    ansible_host=192.168.178.133
 
 [master]
-pik8s000
+raspberrypi1

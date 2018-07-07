@@ -7,33 +7,43 @@
     owner: root
     group: root
     mode: 0755
-  register: cmdline
+  register: config
   tags:
     - boot
+  retries: 5
 
-- name: Pass bridged IPv4 traffic to iptables' chains
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-    state: present
+- name: Setting config options at boot
+  copy:
+    src: config.txt
+    dest: /boot/config.txt
+    owner: root
+    group: root
+    mode: 0755
+  register: config
+  tags:
+    - boot
+  retries: 5
 
 - name: apt-get update
   apt:
-    update_cache=yes
-    autoclean=yes
-    autoremove=yes
-    cache_valid_time=86400
+    # update_cache: yes
+    autoclean: yes
+    autoremove: yes
+    cache_valid_time: 86400
+    purge: yes
 
 - name: apt-get upgrade
   apt:
-    upgrade=full
+    upgrade: full
+    force: yes
+  retries: 5
 
 - name: Reboot
-  shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/cmdline.txt Change"
+  shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"
   async: 1
   poll: 0
   ignore_errors: True
-  when: cmdline|changed
+  when: config is changed
   tags:
     - boot
     - shutdown
@@ -46,7 +56,8 @@
     delay: 15
     timeout: 90
   become: False
-  when: cmdline|changed
+  when: config is changed
   tags:
     - boot
     - shutdown
+  retries: 5

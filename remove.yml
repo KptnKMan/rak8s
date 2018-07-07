@@ -1,0 +1,69 @@
+# playbook to remove kube from all hosts
+# useful for reset config
+
+- hosts: all
+  tasks:
+    - name: Determine if Kubernetes is installed
+      stat:
+        path: /usr/bin/kubeadm
+      register: kube_there
+      ignore_errors: True
+
+    - name: Reset Kubernetes if installed kube 1.11.x
+      shell: kubeadm reset --force
+      register: kubeadm_reset
+      when:
+        - version_kubernetes.find('1.11.') != -1
+        - kube_there.stat.exists == True
+
+    - name: Reset Kubernetes if installed kube 1.10.x 1.9.x
+      shell: kubeadm reset
+      register: kubeadm_reset
+      when:
+        - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
+        - kube_there.stat.exists == True
+
+    - name: Remove any old versions of Kubernetes
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - kubernetes-cni
+      when: kube_there.stat.exists == True
+
+    # Docker Convenience Script Can Only Be Run Once
+    - name: Determine if docker is installed
+      stat:
+        path: /usr/bin/docker
+      register: docker_there
+      ignore_errors: True
+
+    - name: "Remove docker images" 
+      shell: echo $(docker rmi --force $(docker images --all -q) && echo 'true')
+      become: true
+      when: docker_there.stat.exists == True
+
+    - name: Remove any old versions of docker
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      with_items:
+        - docker
+        - docker-engine
+        - docker.io
+        - docker-ce
+      when: docker_there.stat.exists == True
+
+    - name: "Remove pod logging"
+      shell: rm -rf /var/log/pods/* 
+      become: True
+
+    - name: remove any leftover dependencies
+      apt:
+        autoclean: yes
+        autoremove: yes

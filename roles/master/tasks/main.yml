@@ -1,15 +1,50 @@
 ---
 # tasks file for master
-- name: Reset Kubernetes Master
+- name: Reset Kubernetes Master | kube 1.11.x
+  shell: kubeadm reset --force
+  register: kubeadm_reset
+  when:
+    - version_kubernetes.find('1.11.') != -1
+
+- name: Reset Kubernetes Master | kube 1.10.x 1.9.x
   shell: kubeadm reset
   register: kubeadm_reset
+  when:
+    - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
 
-- name: Initialize Master
-  shell: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --token={{ token }}
+- name: Initialize Master | weave+kube 1.11.x
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }} --ignore-preflight-errors=all
   register: kubeadm_init
-  when: kubeadm_reset|succeeded
+  when:
+    - kubeadm_reset is succeeded
+    - cni_net == "weave"
+    - version_kubernetes.find('1.11.') != -1
 
-- name: Create Kubernetes config directory
+- name: Initialize Master | weave+kube 1.10.x
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
+  register: kubeadm_init
+  when:
+    - kubeadm_reset is succeeded
+    - cni_net == "weave"
+    - version_kubernetes.find('1.10.') != -1
+
+# kubeadm bug "/var/run/dockershim.sock" error in 1.9.x https://github.com/kubernetes/kubeadm/issues/733
+- name: Initialize Master | weave+kube 1.9.x
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }} --ignore-preflight-errors=cri
+  register: kubeadm_init
+  when:
+    - kubeadm_reset is succeeded
+    - cni_net == "weave"
+    - version_kubernetes.find('1.9.') != -1
+
+- name: Initialize Master | flannel+kube 
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
+  register: kubeadm_init
+  when:
+    - kubeadm_reset is succeeded
+    - cni_net == "flannel"
+
+- name: Create kubeconfig directory
   file:
     path: /root/.kube/
     state: directory
@@ -17,7 +52,7 @@
     group: root
     mode: 0755
 
-- name: Copy admin.conf to config directory
+- name: Copy kubeconfig to /root/.kube/ directory
   copy:
     src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
@@ -27,18 +62,36 @@
     remote_src: yes
   when: kubeadm_init
 
-- name: Join Kubernetes Cluster
-  shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ groups['master'][0] }}:6443 --discovery-token-unsafe-skip-ca-verification
-  when: kubeadm_reset|succeeded
+- name: Fetch kubeconfig file to local .kube/ directory
+  fetch:
+    # src: /root/.kube/config
+    src: /etc/kubernetes/admin.conf
+    dest: ~/.kube/config
+    flat: yes
+
+- name: Join Kubernetes Cluster | kube 1.11.x 1.10.x 1.9.x
+  shell: kubeadm join --token={{ token }} --discovery-token-unsafe-skip-ca-verification --ignore-preflight-errors=all {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443
+  when:
+    - kubeadm_reset is succeeded
+    - version_kubernetes.find('1.11.') != -1 or version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
   register: kubeadm_join
 
-- name: Install Weave (Networking)
-  shell: kubectl apply -f https://git.io/weave-kube-1.6
+- name: Install CNI Networking | weave
+  shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" 
+  when: cni_net == "weave"
 
-- name: Poke kubelet
+- name: Install CNI Networking | flannel
+  shell: curl -sSL "https://rawgit.com/coreos/flannel/v{{ version_flannel }}/Documentation/kube-flannel.yml" | sed "s/amd64/arm/g" | kubectl create -f -
+  when: cni_net == "flannel"
+
+- name: Poke kubelet 2
   systemd:
-    name: kubelet
+    name: kubelet.service
     state: restarted
     daemon_reload: yes
     enabled: yes
   register: kubelet_poke
+
+- name: wait 30 seconds for Networking to settle
+  wait_for:
+    delay: 30
