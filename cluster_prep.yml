@@ -2,8 +2,9 @@
 # - add pub keys to authorized file
 # - change hostnames to values in inventory file
 # - reboot
+
 # you should run this as:
-# ansible-playbook cluster_prep --ask-pass
+# ansible-playbook cluster_prep.yml --ask-pass
 
 - hosts: all
   sudo: yes
