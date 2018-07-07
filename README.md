@@ -41,8 +41,6 @@ Flannel is usually always `v0.10.0`, docker is always `18.04.0`. Your mileage ma
 
 * Ability to SSH into all Raspberry Pis and escalate privileges with sudo
     * The pi user is fine just change its password
-    * Enable ssh on your headless Raspberry Pis using [step-3 instructions here](https://www.raspberrypi.org/documentation/remote-access/ssh/)
-        * Basically just create an empty file named *ssh* on the root of your Pis */boot* partition. This should be all that is required.
 
 * [Ansible](http://docs.ansible.com/ansible/latest/intro_installation.html) 2.2 or higher
 
@@ -57,10 +55,16 @@ Flannel is usually always `v0.10.0`, docker is always `18.04.0`. Your mileage ma
 
 # Stand Up Your Kubernetes Cluster
 
+## Make sure SSH is setup:
+
+Make sure SSH is enabled on each Pi.
+* Enable ssh on your headless Raspberry Pis using [step-3 instructions here](https://www.raspberrypi.org/documentation/remote-access/ssh/)
+    * Basically just create an empty file named *ssh* on the root of your Pis */boot* partition. This should be all that is required.
+
 ## Download the latest release or clone the repo:
 
 ```
-git clone https://github.com/rak8s/rak8s.git
+git clone https://github.com/kptnkman/rak8s.git
 ```
 
 ## Modify ansible.cfg and inventory
@@ -71,14 +75,18 @@ If your SSH user on the Raspberry Pis are not the Raspbian default `pi` user mod
 
 ## Confirm Ansible is working with your Raspberry Pis:
 
+This doesn't always work, so if you get an error here, you can still continue if you can ssh to the Pis.
 ```
 ansible -m ping all
 ```
 
-## Set hostnames of each host
+## Prep cluster nodes:
 
+I prepared a cluster setup script for you.
+* The script will not work if you have not enabled SSH!
+* You will be prompted for the current/default raspberry Pi 'pi' password. If you have not changed it, it will be the [default password.](https://www.raspberrypi.org/documentation/linux/usage/users.md)
 ```
-ansible-playbook hostnames.yml
+ansible-playbook cluster_prep.yml --ask-pass
 ```
 
 ## Deploy, Deploy, Deploy
@@ -101,12 +109,12 @@ The output should look something like this:
 
 ```
 NAME       STATUS    ROLES     AGE       VERSION
-pik8s000   Ready     master    2d        v1.9.1
-pik8s001   Ready     <none>    2d        v1.9.1
-pik8s002   Ready     <none>    2d        v1.9.1
-pik8s003   Ready     <none>    2d        v1.9.1
-pik8s005   Ready     <none>    2d        v1.9.1
-pik8s004   Ready     <none>    2d        v1.9.1
+pik8s000   Ready     master    2d        v1.10.5
+pik8s001   Ready     <none>    2d        v1.10.5
+pik8s002   Ready     <none>    2d        v1.10.5
+pik8s003   Ready     <none>    2d        v1.10.5
+pik8s005   Ready     <none>    2d        v1.10.5
+pik8s004   Ready     <none>    2d        v1.10.5
 ```
 
 ## Dashboard
