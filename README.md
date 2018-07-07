@@ -24,7 +24,7 @@ Also, it's cheaper than a year of GKE. Plus, why not run Kubernetes in your home
 
 In the [all.yml](group_vars/all.yml) file, these are the verified tested versions of a running from scratch cluster. Kubernetes can run a different version from the cluster version, but in testing these versions are matched. I've worked to make sure that 3 versions are supported,
 meaning `1.11/10/9.x`, so anything kube `1.8.x` and older definitely won't work.
-Flannel is usually always `v0.10.0`, docker is always `18.04.0`. Your mileage may vary. Weave is preferred CNI since they [fixed the bug](https://github.com/raspberrypi/linux/issues/2580) in RPi firmware. :)
+Flannel is usually always `0.10.0`, docker is always `18.03.1`. Your mileage may vary, but these worked in testing. Weave is preferred CNI since they [fixed the bug](https://github.com/raspberrypi/linux/issues/2580) in RPi firmware. :)
 * version_kubernetes: `1.11.0`, `1.10.5`, `1.9.9`
 * version_kube_cluster: `1.11.0`, `1.10.5`, `1.9.9`
 * version_flannel: `0.10.0`
