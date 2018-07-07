@@ -1,9 +1,10 @@
 token: udy29x.ugyyk3tumg27atmr
 podnet: 10.244.0.0/16
-version_kubernetes: "1.9.7" # "1.10.2" "1.9.7" "1.8.9"
+version_kubernetes: "1.10.5" # "1.11.0" "1.10.5" "1.9.9"
+version_kube_cluster: "1.10.5" # "1.11.0" "1.10.5" "1.9.9"
 version_flannel: "0.10.0" # "0.10.0" "0.9.1" "0.9.0" "0.8.0"
-cni_net: "flannel" # weave or flannel or weave_kube_arm
-version_docker: "18.04.0~ce~3-0~raspbian"
+cni_net: "weave" # weave or flannel
+version_docker: "18.03.1~ce-0~debian"
 # 18.05.0~ce~3-0~raspbian
 # 18.04.0~ce~3-0~raspbian
 # 18.03.1~ce-0~raspbian
