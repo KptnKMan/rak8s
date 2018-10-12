@@ -1,0 +1,81 @@
+# playbook to:
+## fix the "kubeadm init" error similar to:
+## [ERROR SystemVerification]: failed to parse kernel config: unable to load kernel module "configs": output - "modprobe: 
+## ERROR: ../libkmod/libkmod.c:586 kmod_search_moddep() could not open moddep file '/lib/modules/4.14.52-v7+/modules.dep.bin'\nmodprobe: 
+## FATAL: Module configs not found in directory /lib/modules/4.14.52-v7+\n", err - exit status 1
+# This happens because:
+## Kernel is compiled using a different version of GCC than installed.
+## Version compiled currently 4.9.3, version installed currently 6.3.0
+# - run rpi-update
+# - download rpi-source
+# - update GCC to 4.9
+# - reboot
+# - run rpi-source
+
+# you should run this as:
+# ansible-playbook cluster_firmware.yml --ask-pass
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+    - name: Run rpi-update
+      shell: rpi-update
+
+    - name: Get rpi-source
+      shell: wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source && sudo chmod +x /usr/bin/rpi-source && /usr/bin/rpi-source -q --tag-update
+
+    - name: Install GCC G++ BC
+      shell: apt-get install gcc-4.9 g++-4.9 bc -y
+
+    # sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 20
+    # sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+    # sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.6 20
+    # sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+
+    - name: Set GCC 4.9
+      shell: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 80
+
+    - name: Set G++ 4.9
+      shell: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 80
+
+    - name: main | restarting machine
+      shell: sleep 2 && shutdown -r now "rebooting to complete hostname change"
+      async: 1
+      poll: 0
+      ignore_errors: true
+      become: true
+
+    - name: main | waiting for server to come back
+      wait_for:
+        host: "{{ ansible_host | default(inventory_hostname) }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      vars:
+        ansible_connection: local
+      become: false
+
+    - name: Run rpi-source
+      shell: sudo rpi-source
+      ignore_errors: True
+      register: reboot
+
+    - name: main | restarting machine
+      shell: sleep 2 && shutdown -r now "rebooting to complete hostname change"
+      async: 1
+      poll: 0
+      ignore_errors: true
+      become: true
+      when: reboot is changed
+
+    - name: main | waiting for server to come back
+      wait_for:
+        host: "{{ ansible_host | default(inventory_hostname) }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      vars:
+        ansible_connection: local
+      become: false
+      when: reboot is changed
