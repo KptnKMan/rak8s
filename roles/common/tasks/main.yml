@@ -32,11 +32,26 @@
     cache_valid_time: 86400
     purge: yes
 
+- name: Set Kube Packages to not upgrade before apt-get upgrade
+  shell: apt-mark hold kubelet kubeadm kubectl
+
+- name: List Packages to not upgrade
+  shell: dpkg --get-selections | grep "hold"
+  register: package_result
+
+- name: Print packages held from updates
+  debug:
+    var: package_result
+    verbosity: 0
+
 - name: apt-get upgrade
   apt:
     upgrade: full
     force: yes
   retries: 5
+
+- name: Un-Set Kube Packages to not upgrade after apt-get upgrade
+  shell: apt-mark unhold kubelet kubeadm kubectl
 
 - name: Reboot
   shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"
