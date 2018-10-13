@@ -1,8 +1,22 @@
 token: udy29x.ugyyk3tumg27atmr
 podnet: 10.244.0.0/16
-version_kubernetes: "1.10.5" # "1.11.0" "1.10.5" "1.9.9"
-version_kube_cluster: "1.10.5" # "1.11.0" "1.10.5" "1.9.9"
-version_flannel: "0.10.0" # "0.10.0" "0.9.1" "0.9.0" "0.8.0"
+version_kubernetes: "1.10.5"
+# "1.11.0"
+# "1.10.8"
+# "1.10.6"
+# "1.10.5"
+# "1.9.9"
+version_kube_cluster: "1.10.5"
+# "1.11.0"
+# "1.10.8"
+# "1.10.6" <= "kubeadm reset" requires "-f" from here
+# "1.10.5" <= works fine, kubeadm init warning for older docker >v17.03
+# "1.9.9"
+version_flannel: "0.10.0"
+# "0.10.0"
+# "0.9.1"
+# "0.9.0"
+# "0.8.0"
 cni_net: "weave" # weave or flannel
 version_docker: "18.03.1~ce-0~debian" # versions for Raspbian Stretch below:
 # 18.03.1~ce-0~debian
