@@ -37,6 +37,11 @@
     - cni_net == "weave"
     - version_kubernetes.find('1.9.') != -1
 
+- name: Print kubeadm init response
+  debug:
+    var: kubeadm_init
+    verbosity: 0
+
 - name: Initialize Master | flannel+kube 
   shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
   register: kubeadm_init
@@ -62,11 +67,17 @@
     remote_src: yes
   when: kubeadm_init
 
-- name: Fetch kubeconfig file to local .kube/ directory
+- name: Fetch kubeconfig file to local ~/.kube/ directory
   fetch:
     # src: /root/.kube/config
     src: /etc/kubernetes/admin.conf
     dest: ~/.kube/config
+    flat: yes
+
+- name: Fetch kubeconfig file to local-clone .config/ directory
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: .config/kubeconfig
     flat: yes
 
 - name: Join Kubernetes Cluster | kube 1.11.x 1.10.x 1.9.x
