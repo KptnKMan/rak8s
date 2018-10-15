@@ -6,11 +6,12 @@
 # This happens because:
 ## Kernel is compiled using a different version of GCC than installed.
 ## Version compiled currently 4.9.3, version installed currently 6.3.0
-# - run rpi-update
 # - download rpi-source
+# - run rpi-update
 # - update GCC to 4.9
 # - reboot
 # - run rpi-source
+# - reboot
 
 # you should run this as:
 # ansible-playbook cluster_firmware.yml --ask-pass
@@ -19,11 +20,11 @@
   sudo: yes
   tasks:
 
-    - name: Run rpi-update
-      shell: rpi-update
-
     - name: Get rpi-source
       shell: wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source && sudo chmod +x /usr/bin/rpi-source && /usr/bin/rpi-source -q --tag-update
+
+    - name: Run rpi-update
+      shell: rpi-update
 
     - name: Install GCC G++ BC
       shell: apt-get install gcc-4.9 g++-4.9 bc -y

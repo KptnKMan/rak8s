@@ -8,7 +8,7 @@
         autoclean: yes
         autoremove: yes
 
-    - name: Upgrade kubeadm
+    - name: Upgrade kubeadm to latest
       apt:
         name: "{{ item }}"
         state: latest
@@ -19,7 +19,7 @@
       shell: curl -sSL https://dl.k8s.io/release/stable.txt
       register: stable_ver
 
-    - name: Upgrade cluster with kubeadm
+    - name: Upgrade cluster with kubeadm to {{ stable_ver.stdout }}
       shell: "kubeadm upgrade apply -y {{ stable_ver.stdout }}"
       async: 300
       poll: 5
@@ -39,7 +39,7 @@
 
 - hosts: all
   tasks:
-    - name: Upgrade Y'all
+    - name: Upgrade Y'all to {{ stable_ver.stdout }}
       apt:
         name: "{{ item }}"
         state: latest

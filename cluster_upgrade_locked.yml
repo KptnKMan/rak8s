@@ -1,4 +1,4 @@
-# playbook to upgrade cluster to latest available version
+# playbook to upgrade cluster to locked specific version in all.yml file
 
 - hosts: master
   tasks:
@@ -8,18 +8,14 @@
         autoclean: yes
         autoremove: yes
 
-    - name: Upgrade kubeadm
+    - name: Upgrade kubeadm to v{{ version_kube_cluster }}
       apt:
         name: "{{ item }}"
-        state: latest
+        state: present
       with_items:
         - kubeadm={{ version_kubernetes }}-00
 
-    # - name: Determine latest stable version of Kubernetes
-    #   shell: curl -sSL https://dl.k8s.io/release/stable.txt
-    #   register: stable_ver
-
-    - name: Upgrade cluster with kubeadm
+    - name: Upgrade cluster with kubeadm to v{{ version_kube_cluster }}
       shell: "kubeadm upgrade apply -y v{{ version_kube_cluster }}"
       async: 300
       poll: 5
@@ -39,7 +35,7 @@
 
 - hosts: all
   tasks:
-    - name: Upgrade Y'all
+    - name: Upgrade Y'all to v{{ version_kube_cluster }}
       apt:
         name: "{{ item }}"
         state: present
