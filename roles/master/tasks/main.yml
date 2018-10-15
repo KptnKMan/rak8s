@@ -68,17 +68,19 @@
     backup: yes
   when: kubeadm_init
 
-- name: Fetch kubeconfig file to local ~/.kube/ directory
-  fetch:
-    # src: /root/.kube/config
-    src: /etc/kubernetes/admin.conf
-    dest: ~/.kube/config
-    flat: yes
-
 - name: Fetch kubeconfig file to local-clone .config/ directory
   fetch:
     src: /etc/kubernetes/admin.conf
     dest: .config/kubeconfig
+    flat: yes
+
+- name: Backup local kubeconfig to ~/.kube/config.rak8s_backup.DATETIME
+  shell: cp ~/.kube/config ~/.kube/"config.rak8s_backup.$(date +"%Y%m%d_%H%M%S")"
+
+- name: Fetch kubeconfig file to local ~/.kube/ directory
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: ~/.kube/config
     flat: yes
 
 - name: Join Kubernetes Cluster | kube 1.11.x 1.10.x 1.9.x

@@ -48,9 +48,10 @@
 - name: Set Kube Packages to not upgrade before apt-get upgrade
   shell: apt-mark hold kubelet kubeadm kubectl
 
-- name: List Packages to not upgrade
+- name: List Packages to not upgrade (might fail - ignore)
   shell: dpkg --get-selections | grep "hold"
   register: package_result
+  ignore_errors: True
 
 - name: Print packages held from updates
   debug:
