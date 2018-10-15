@@ -8,7 +8,7 @@
         autoclean: yes
         autoremove: yes
 
-    - name: Upgrade kubeadm to v{{ version_kube_cluster }}
+    - name: Upgrade kubeadm to v{{ version_kubernetes }}
       apt:
         name: "{{ item }}"
         state: present
@@ -18,7 +18,13 @@
     - name: Upgrade cluster with kubeadm to v{{ version_kube_cluster }}
       shell: "kubeadm upgrade apply -y v{{ version_kube_cluster }}"
       async: 300
-      poll: 5
+      poll: 10
+      register: upgrade_output
+
+    - name: Print upgrade output
+      debug:
+        var: upgrade_output
+        verbosity: 0
 
     - name: Cordon Hosts
       shell: "kubectl cordon {{ item }}"
@@ -35,7 +41,7 @@
 
 - hosts: all
   tasks:
-    - name: Upgrade Y'all to v{{ version_kube_cluster }}
+    - name: Upgrade Y'all to v{{ version_kubernetes }}
       apt:
         name: "{{ item }}"
         state: present

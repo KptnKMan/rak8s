@@ -22,7 +22,13 @@
     - name: Upgrade cluster with kubeadm to {{ stable_ver.stdout }}
       shell: "kubeadm upgrade apply -y {{ stable_ver.stdout }}"
       async: 300
-      poll: 5
+      poll: 10
+      register: upgrade_output
+
+    - name: Print upgrade output
+      debug:
+        var: upgrade_output
+        verbosity: 0
 
     - name: Cordon Hosts
       shell: "kubectl cordon {{ item }}"
