@@ -8,17 +8,34 @@
         autoclean: yes
         autoremove: yes
 
-    - name: Upgrade kubeadm to v{{ version_kubernetes }}
+    - name: Upgrade kubeadm to v{{ version_kubernetes }} --ignore-preflight-errors=all
       apt:
         name: "{{ item }}"
         state: present
       with_items:
         - kubeadm={{ version_kubernetes }}-00
 
+    - name: main | restarting machine
+      shell: sleep 2 && shutdown -r now "rebooting to complete hostname change"
+      async: 1
+      poll: 0
+      ignore_errors: true
+      become: true
+
+    - name: main | waiting for server to come back
+      wait_for:
+        host: "{{ ansible_host | default(inventory_hostname) }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      vars:
+        ansible_connection: local
+      become: false
+
     - name: Upgrade cluster with kubeadm to v{{ version_kube_cluster }}
       shell: "kubeadm upgrade apply -y v{{ version_kube_cluster }}"
       async: 300
-      poll: 10
+      poll: 100
       register: upgrade_output
 
     - name: Print upgrade output

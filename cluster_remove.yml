@@ -9,23 +9,29 @@
       register: kube_there
       ignore_errors: True
 
-    - name: Reset Kubernetes if installed kube 1.11.x
+    - name: Un-Set Kube Packages, if they are held
+      shell: apt-mark unhold kubelet kubeadm kubectl
+
+    - name: Reset Kubernetes if installed | kube 1.12.x 1.11.x
       shell: kubeadm reset --force
       register: kubeadm_reset
       when:
-        - version_kubernetes.find('1.11.') != -1
-        - kube_there.stat.exists == True
+        - version_kubernetes.find('1.12.') != -1 or version_kubernetes.find('1.11.') != -1
+      ignore_errors: True
 
-    - name: Reset Kubernetes if installed kube 1.10.x 1.9.x
+    - name: Reset Kubernetes if installed | kube 1.10.x 1.9.x
       shell: kubeadm reset
       register: kubeadm_reset
       when:
         - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
         - kube_there.stat.exists == True
+      ignore_errors: True
 
     - name: Remove any old versions of Kubernetes
       apt:
         name: "{{ item }}"
+        autoremove: yes
+        autoclean: yes
         state: absent
         purge: yes
       with_items:
