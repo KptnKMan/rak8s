@@ -1,10 +1,10 @@
 ---
 # tasks file for minions
-- name: Reset Kubernetes Worker | kube 1.11.x
+- name: Reset Kubernetes Worker | kube 1.12.x 1.11.x
   shell: kubeadm reset --force
   register: kubeadm_reset
   when:
-    - version_kubernetes.find('1.11.') != -1
+    - version_kubernetes.find('1.12.') != -1 or version_kubernetes.find('1.11.') != -1
 
 - name: Reset Kubernetes Worker | kube 1.10.x 1.9.x
   shell: kubeadm reset
