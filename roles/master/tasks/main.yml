@@ -12,42 +12,32 @@
   when:
     - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
 
-- name: Initialize Master | weave+kube 1.12.x 1.11.x
+- name: Initialize Master | kube 1.12.x 1.11.x
   shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
   register: kubeadm_init
   when:
     - kubeadm_reset is succeeded
-    - cni_net == "weave"
     - version_kubernetes.find('1.12.') != -1 or version_kubernetes.find('1.11.') != -1
 
-- name: Initialize Master | weave+kube 1.10.x
+- name: Initialize Master | kube 1.10.x
   shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
   register: kubeadm_init
   when:
     - kubeadm_reset is succeeded
-    - cni_net == "weave"
     - version_kubernetes.find('1.10.') != -1
 
 # kubeadm bug "/var/run/dockershim.sock" error in 1.9.x https://github.com/kubernetes/kubeadm/issues/733
-- name: Initialize Master | weave+kube 1.9.x
+- name: Initialize Master | kube 1.9.x
   shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }} --ignore-preflight-errors=cri
   register: kubeadm_init
   when:
     - kubeadm_reset is succeeded
-    - cni_net == "weave"
     - version_kubernetes.find('1.9.') != -1
 
 - name: Print kubeadm init response
   debug:
     var: kubeadm_init
     verbosity: 0
-
-- name: Initialize Master | flannel+kube 
-  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
-  register: kubeadm_init
-  when:
-    - kubeadm_reset is succeeded
-    - cni_net == "flannel"
 
 - name: Create kubeconfig directory
   file:
@@ -95,7 +85,7 @@
   when: cni_net == "weave"
 
 - name: Install CNI Networking | flannel
-  shell: curl -sSL "https://rawgit.com/coreos/flannel/v{{ version_flannel }}/Documentation/kube-flannel.yml" | sed "s/amd64/arm/g" | kubectl create -f -
+  shell: kubectl apply -f "https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
   when: cni_net == "flannel"
 
 - name: Poke kubelet 2
