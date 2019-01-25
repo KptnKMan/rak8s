@@ -1,5 +1,12 @@
 ---
 # tasks file for master
+- name: Poke kubelet 2
+  systemd:
+    name: kubelet.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
 - name: Reset Kubernetes Master | kube 1.12.x 1.11.x
   shell: kubeadm reset --force
   register: kubeadm_reset
@@ -88,7 +95,7 @@
   shell: kubectl apply -f "https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
   when: cni_net == "flannel"
 
-- name: Poke kubelet 2
+- name: Poke kubelet 3
   systemd:
     name: kubelet.service
     state: restarted

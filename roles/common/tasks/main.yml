@@ -47,6 +47,7 @@
 
 - name: Set Kube Packages to not upgrade before apt-get upgrade
   shell: apt-mark hold docker-ce kubelet kubeadm kubectl
+  ignore_errors: True
 
 - name: List Packages to not upgrade (might fail - ignore)
   shell: dpkg --get-selections | grep "hold"
@@ -75,6 +76,7 @@
 
 - name: Un-Set Kube Packages to not upgrade after apt-get upgrade
   shell: apt-mark unhold docker-ce kubelet kubeadm kubectl
+  ignore_errors: True
 
 - name: Reboot
   shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"

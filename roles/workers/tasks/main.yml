@@ -1,5 +1,12 @@
 ---
 # tasks file for minions
+- name: Poke kubelet 2
+  systemd:
+    name: kubelet.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
 - name: Reset Kubernetes Worker | kube 1.12.x 1.11.x
   shell: kubeadm reset --force
   register: kubeadm_reset
@@ -17,7 +24,7 @@
   when: kubeadm_reset is succeeded
   register: kubeadm_join
 
-- name: Poke kubelet
+- name: Poke kubelet 3
   systemd:
     name: kubelet
     state: restarted

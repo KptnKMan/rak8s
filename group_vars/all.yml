@@ -1,12 +1,13 @@
 token: udy29x.ugyyk3tumg27atmr
 podnet: 10.244.0.0/16
-version_kubernetes: "1.12.1" # version of binary download
-version_kube_cluster: "1.12.1" # cluster runtime version =< version_kubernetes
-# "1.12.1" <= tested, works
+version_kubernetes: "1.12.3" # version of binary download
+version_kube_cluster: "1.12.3" # cluster runtime version =< version_kubernetes
+# "1.12.1/2/3" <= tested, works
 # "1.11.0/1/2/3" <= tested, works, "kubeadm reset" requires "-f" from here
 # "1.10.5/6/7/8" <= tested, works, kubeadm init warning for older docker >v17.03
 # "1.9.9/10/11"
 version_docker: "18.06.1~ce~3-0~debian" # versions for Raspbian Stretch below:
+# 18.09.0~3-0~debian-stretch
 # 18.06.1~ce~3-0~debian <= tested, use for kube 1.12.x
 # 18.06.0~ce~3-0~debian <= untested
 # 18.03.1~ce-0~debian <= tested, use for kube 1.11.x & 1.10.x+
