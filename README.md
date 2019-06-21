@@ -50,7 +50,6 @@ Flannel is usually always `0.10.0`, docker is always `18.03.1`. Your mileage may
 
 ## Recommendations
 
-* Since Raspbian Lite is being used it's recommended that the video memory of the Raspberry Pi 3s be [set to its lowest setting](https://www.raspberrypi.org/documentation/configuration/config-txt/memory.md) (16 MB).
 * Setup SSH key pairs so your password is not required every time Ansible runs
 
 # Stand Up Your Kubernetes Cluster
@@ -89,6 +88,7 @@ I prepared a cluster setup script for you.
 ansible-playbook cluster_prep.yml --ask-pass
 ```
 
+This may fail to ping if you have not setup SSH keys and only configured your Pi's with passwords
 ## Deploy, Deploy, Deploy
 
 ```
@@ -127,6 +127,21 @@ kubectl proxy
 
 Then open a web browser and navigate to:
 [http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/)
+
+# Need to Start Over?
+
+Did something go wrong? Nodes fail some process or not joined to the cluster? Break Docker Versions with apt-update? 
+
+Try the process again from the beginning:
+
+```
+ansible-playbook cleanup.yml
+```
+Wait for everything to run and then start again with:
+
+```
+ansible-playbook cluster.yml
+```
 
 # Where to Get Help
 

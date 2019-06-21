@@ -1,17 +1,35 @@
 ---
 - name: Ensure hostname set
-  hostname: name={{ inventory_hostname }}
+  hostname:
+    name: "{{ inventory_hostname }}"
   when: not inventory_hostname is match('(\d{1,3}\.){3}\d{1,3}')
   register: hostname
   tags: hostname
 
 - name: Ensure hostname is in /etc/hosts
   lineinfile:
-    dest=/etc/hosts
-    regexp="^{{ ansible_default_ipv4.address }}.+$"
-    line="{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
+    dest: /etc/hosts
+    regexp: "^{{ ansible_default_ipv4.address }}.+$"
+    line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
   register: hostname
   tags: hostname
+
+- name: set timezone to UTC
+  timezone:
+    name: UTC
+  register: timezone
+
+# - name: gpu mem check
+#   shell: cat /boot/config.txt | grep gpu_mem
+#   changed_when: false
+#   register: gpu_mem_check
+
+# - name: reduce gpu memory
+#   lineinfile:
+#     path: /boot/config.txt
+#     line: gpu_mem=16
+#   register: gpu_mem
+#   when: gpu_mem_check.stdout == ""
 
 - name: Enabling cgroup options at boot
   copy:
@@ -39,7 +57,7 @@
 
 - name: apt-get update
   apt:
-    # update_cache: yes
+    update_cache: yes
     autoclean: yes
     autoremove: yes
     cache_valid_time: 86400
@@ -73,6 +91,7 @@
     force: yes
   with_items:
     - raspberrypi-kernel-headers
+    - python-apt
 
 - name: Un-Set Kube Packages to not upgrade after apt-get upgrade
   shell: apt-mark unhold docker-ce kubelet kubeadm kubectl
@@ -93,7 +112,7 @@
   args:
     host: "{{ inventory_hostname }}"
     port: 22
-    delay: 20
+    delay: 15
     timeout: 120
   become: False
   when: config or hostname is changed

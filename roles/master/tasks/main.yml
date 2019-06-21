@@ -92,7 +92,8 @@
   when: cni_net == "weave"
 
 - name: Install CNI Networking | flannel
-  shell: kubectl apply -f "https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+#   shell: kubectl apply -f "https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+  shell: "curl -sSL https://rawgit.com/coreos/flannel/{{ flannel_version }}/Documentation/kube-flannel.yml | kubectl create -f -" 
   when: cni_net == "flannel"
 
 - name: Poke kubelet 3
