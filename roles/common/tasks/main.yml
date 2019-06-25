@@ -17,7 +17,7 @@
 - name: set timezone to UTC
   timezone:
     name: UTC
-  register: timezone
+  register: config
 
 # - name: gpu mem check
 #   shell: cat /boot/config.txt | grep gpu_mem
@@ -31,29 +31,29 @@
 #   register: gpu_mem
 #   when: gpu_mem_check.stdout == ""
 
-- name: Enabling cgroup options at boot
-  copy:
-    src: cmdline.txt
-    dest: /boot/cmdline.txt
-    owner: root
-    group: root
-    mode: 0755
-  register: config
-  tags:
-    - boot
-  retries: 5
+# - name: Enabling cgroup options at boot
+#   copy:
+#     src: cmdline.txt
+#     dest: /boot/cmdline.txt
+#     owner: root
+#     group: root
+#     mode: 0755
+#   register: config
+#   tags:
+#     - boot
+#   retries: 5
 
-- name: Setting config options at boot
-  copy:
-    src: config.txt
-    dest: /boot/config.txt
-    owner: root
-    group: root
-    mode: 0755
-  register: config
-  tags:
-    - boot
-  retries: 5
+# - name: Setting config options at boot
+#   copy:
+#     src: config.txt
+#     dest: /boot/config.txt
+#     owner: root
+#     group: root
+#     mode: 0755
+#   register: config
+#   tags:
+#     - boot
+#   retries: 5
 
 - name: apt-get update
   apt:

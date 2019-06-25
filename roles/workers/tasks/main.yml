@@ -7,6 +7,12 @@
     daemon_reload: yes
     enabled: yes
 
+- name: Reset Kubernetes Worker | kube 1.15.x 1.14.x 1.13.x
+  shell: kubeadm reset --force
+  register: kubeadm_reset
+  when:
+    - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1
+
 - name: Reset Kubernetes Worker | kube 1.12.x 1.11.x
   shell: kubeadm reset --force
   register: kubeadm_reset
@@ -19,15 +25,51 @@
   when:
     - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
 
-- name: Join Kubernetes Cluster
-  shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443 --discovery-token-unsafe-skip-ca-verification
-  when: kubeadm_reset is succeeded
+# - name: Join Kubernetes Cluster
+#   shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443 --discovery-token-unsafe-skip-ca-verification
+#   when: kubeadm_reset is succeeded
+#   register: kubeadm_join
+
+- name: Join Kubernetes Cluster | kube 1.15.x 1.14.x 1.13.x 1.12.x
+  shell: kubeadm join --token={{ token }} --discovery-token-unsafe-skip-ca-verification {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443
+  when:
+    - kubeadm_reset is succeeded
+    - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1 or version_kubernetes.find('1.12.') != -1
   register: kubeadm_join
 
-- name: Poke kubelet 3
-  systemd:
-    name: kubelet
-    state: restarted
-    daemon_reload: yes
-    enabled: yes
-  register: kubelet_poke
+- name: Join Kubernetes Cluster | kube 1.11.x 1.10.x 1.9.x
+  shell: kubeadm join --token={{ token }} --discovery-token-unsafe-skip-ca-verification --ignore-preflight-errors=all {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443
+  when:
+    - kubeadm_reset is succeeded
+    - version_kubernetes.find('1.11.') != -1 or version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
+  register: kubeadm_join
+
+# - name: Poke kubelet 3
+#   systemd:
+#     name: kubelet
+#     state: restarted
+#     daemon_reload: yes
+#     enabled: yes
+#   register: kubelet_poke
+
+- name: Reboot
+  shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"
+  async: 1
+  poll: 0
+  ignore_errors: True
+  tags:
+    - boot
+    - shutdown
+
+- name: Wait for Reboot
+  local_action: wait_for
+  args:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    delay: 15
+    timeout: 120
+  become: False
+  tags:
+    - boot
+    - shutdown
+  retries: 5

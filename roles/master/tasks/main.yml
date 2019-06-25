@@ -7,6 +7,12 @@
     daemon_reload: yes
     enabled: yes
 
+- name: Reset Kubernetes Master | kube 1.15.x 1.14.x 1.13.x
+  shell: kubeadm reset --force
+  register: kubeadm_reset
+  when:
+    - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1
+
 - name: Reset Kubernetes Master | kube 1.12.x 1.11.x
   shell: kubeadm reset --force
   register: kubeadm_reset
@@ -18,6 +24,13 @@
   register: kubeadm_reset
   when:
     - version_kubernetes.find('1.10.') != -1 or version_kubernetes.find('1.9.') != -1
+
+- name: Initialize Master | kube 1.15.x 1.14.x 1.13.x
+  shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
+  register: kubeadm_init
+  when:
+    - kubeadm_reset is succeeded
+    - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1
 
 - name: Initialize Master | kube 1.12.x 1.11.x
   shell: kubeadm init --token={{ token }} --apiserver-advertise-address={{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }} --kubernetes-version=v{{ version_kube_cluster }} --pod-network-cidr={{ podnet }}
@@ -80,6 +93,13 @@
     dest: ~/.kube/config
     flat: yes
 
+- name: Join Kubernetes Cluster | kube 1.15.x 1.14.x 1.13.x 1.12.x
+  shell: kubeadm join --token={{ token }} --discovery-token-unsafe-skip-ca-verification --ignore-preflight-errors='DirAvailable--etc-kubernetes-manifests,FileAvailable--etc-kubernetes-kubelet.conf,Port-10250,FileAvailable--etc-kubernetes-pki-ca.crt' {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443
+  when:
+    - kubeadm_reset is succeeded
+    - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1 or version_kubernetes.find('1.12.') != -1
+  register: kubeadm_join
+
 - name: Join Kubernetes Cluster | kube 1.11.x 1.10.x 1.9.x
   shell: kubeadm join --token={{ token }} --discovery-token-unsafe-skip-ca-verification --ignore-preflight-errors=all {{ hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address'] }}:6443
   when:
@@ -96,14 +116,91 @@
   shell: "curl -sSL https://rawgit.com/coreos/flannel/{{ flannel_version }}/Documentation/kube-flannel.yml | kubectl create -f -" 
   when: cni_net == "flannel"
 
-- name: Poke kubelet 3
-  systemd:
-    name: kubelet.service
-    state: restarted
-    daemon_reload: yes
-    enabled: yes
-  register: kubelet_poke
+# - name: Poke kubelet 3
+#   systemd:
+#     name: kubelet.service
+#     state: restarted
+#     daemon_reload: yes
+#     enabled: yes
+#   register: kubelet_poke
 
-- name: wait 30 seconds for Networking to settle
-  wait_for:
-    delay: 30
+# - name: wait 30 seconds for Networking to settle
+#   wait_for:
+#     delay: 30
+
+- name: Reboot
+  shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"
+  async: 1
+  poll: 0
+  ignore_errors: True
+  tags:
+    - boot
+    - shutdown
+
+- name: Wait for Reboot
+  local_action: wait_for
+  args:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    delay: 15
+    timeout: 120
+  become: False
+  tags:
+    - boot
+    - shutdown
+  retries: 5
+
+# - name: wait 40 seconds after reboot for Kube API to come online
+#   wait_for:
+#     delay: 40
+
+- name: Install jq
+  apt:
+    name: jq
+    state: present
+    force: yes
+
+- name: Check master node name is correct from inventory
+  shell: kubectl get nodes -o json | jq -r '.items[0].metadata.name'
+  register: master_kubelet
+  until: master_kubelet.stdout == "{{ hostvars[groups['master'][0]]['ansible_hostname'] }}"
+  retries: 120
+  delay: 5
+
+- name: Print kubeadm init response
+  debug:
+    var: master_kubelet
+    verbosity: 0
+
+# - name: Should read 'Ready'
+#   shell: kubectl get nodes -o json | jq -r '.items[0].status.conditions[4].type'
+#   register: ready_state_test
+
+# - name: Print kubeadm init response
+#   debug:
+#     var: ready_state_test
+#     verbosity: 0
+
+- name: Wait for Master kubelet to be ready
+  shell: kubectl get nodes -o json | jq -r '.items[0].status.conditions[4].type'
+  register: ready_state
+  until: ready_state.stdout == "Ready"
+  retries: 120
+  delay: 10
+
+- name: Print kubeadm init response
+  debug:
+    var: ready_state
+    verbosity: 0
+
+# - name: "shut down Debian flavored systems"
+#   command: /sbin/shutdown -t now
+#   when: ansible_facts['os_family'] == "Debian"
+
+# - name: Continue when master is 'Ready'
+#   shell: echo "good"
+#   register: task_result
+#   until: task_result.rc == Ready
+#   retries: 20
+#   delay: 15
+#   when: master_kubelet.stdout == {{ hostvars[groups['master'][0]]['ansible_hostname'] }}

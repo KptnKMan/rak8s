@@ -62,25 +62,60 @@
   when: docker_there.stat.exists == False
   register: docker_installed
 
-- name: Lock docker version to {{ docker_ce_version}}
+- name: Lock docker version to {{ version_docker }}
   command: /usr/bin/apt-mark hold docker-ce
   when: docker_installed.changed
 
-# # Run once because it fails always first time
-- name: Pass bridged IPv4 traffic to iptables' chains [test]
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-    state: present
-  ignore_errors: yes
+# # # Run once because it fails always first time
+# - name: Pass bridged IPv4 traffic to iptables' chains [test]
+#   sysctl:
+#     name: net.bridge.bridge-nf-call-iptables
+#     value: 1
+#     state: present
+#   ignore_errors: yes
 
-# Run for reals
-- name: Pass bridged IPv4 traffic to iptables' chains [for reals]
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-    state: present
-  retries: 5
+# # Run for reals
+# - name: Pass bridged IPv4 traffic to iptables' chains [for reals]
+#   sysctl:
+#     name: net.bridge.bridge-nf-call-iptables
+#     value: 1
+#     state: present
+#   retries: 5
+
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker
+- name: Setup Docker daemon
+  shell: |
+    cat > /etc/docker/daemon.json <<EOF
+    {
+      "exec-opts": ["native.cgroupdriver=systemd"],
+      "log-driver": "json-file",
+      "log-opts": {
+        "max-size": "100m"
+      },
+      "storage-driver": "overlay2"
+    }
+    EOF
+  when: docker_installed.changed
+
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker
+# - name: Setup Docker daemon dir
+#   shell: mkdir -p /etc/systemd/system/docker.service.d
+#   when: docker_installed.changed
+
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker
+- name: Setup Docker daemon dir
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker
+- name: Poke Docker
+  systemd:
+    name: docker.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  register: kubelet_poke
 
 - name: Add Google Cloud Repo Key
   apt_key:

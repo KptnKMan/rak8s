@@ -10,7 +10,20 @@
       ignore_errors: True
 
     - name: Un-Set Kube Packages, if they are held
-      shell: apt-mark unhold kubelet kubeadm kubectl
+      shell: "apt-mark unhold {{ item }}"
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - kubernetes-cni
+      ignore_errors: True
+
+    - name: Reset Kubernetes if installed | kube 1.15.x 1.14.x 1.13.x
+      shell: kubeadm reset --force
+      register: kubeadm_reset
+      when:
+        - version_kubernetes.find('1.15.') != -1 or version_kubernetes.find('1.14.') != -1 or version_kubernetes.find('1.13.') != -1
+      ignore_errors: True
 
     - name: Reset Kubernetes if installed | kube 1.12.x 1.11.x
       shell: kubeadm reset --force
@@ -53,6 +66,11 @@
       become: true
       when: docker_there.stat.exists == True
 
+    - name: Un-Set Docker Packages, if they are held
+      command: apt-mark unhold docker-ce
+      when: docker_there.stat.exists == True
+      ignore_errors: True
+
     - name: Remove any old versions of docker
       apt:
         name: "{{ item }}"
@@ -73,3 +91,38 @@
       apt:
         autoclean: yes
         autoremove: yes
+
+    - name: Remove Docker CE repository
+      apt_repository:
+        repo: "deb [arch=armhf] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        state: absent
+
+    # Use xenial because google doesn't update their repos
+    - name: Remove Kubernetes APT repository
+      apt_repository:
+        # repo: "deb http://apt.kubernetes.io/ kubernetes-{{ ansible_distribution_release }} main"
+        repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+        state: absent
+        filename: 'kubernetes'
+
+    - name: Reboot
+      shell: sleep 2 && shutdown -r now "Ansible Reboot for /boot/config.txt Change"
+      async: 1
+      poll: 0
+      ignore_errors: True
+      tags:
+        - boot
+        - shutdown
+
+    - name: Wait for Reboot
+      local_action: wait_for
+      args:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        delay: 15
+        timeout: 120
+      become: False
+      tags:
+        - boot
+        - shutdown
+      retries: 5
